@@ -15,3 +15,5 @@ button .ui-icon{pointer-events:none}
 .section-head .ui-icon{color:#df7e89;width:20px;height:20px;flex-basis:20px}
 @media(max-width:1050px){nav{gap:12px}nav a{font-size:12px}}
 @media(max-width:600px){.footer-brand{gap:12px}.signature{flex-wrap:wrap}}
+
+.header-tools{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.language-control{display:flex;align-items:center;gap:6px;margin:0;font-size:11px;color:var(--muted)}.language-control select{background:#181518;color:var(--ink);border:1px solid #65535b;border-radius:5px;padding:6px;max-width:130px}header{flex-wrap:wrap}nav{flex-wrap:wrap}html[lang="de"] nav a{font-size:12px}
