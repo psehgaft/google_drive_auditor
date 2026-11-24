@@ -5,26 +5,60 @@ on:
   workflow_dispatch:
 permissions:
   contents: read
-  pages: write
-  id-token: write
 concurrency:
   group: pages
   cancel-in-progress: true
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - run: node --check app.js
+      - name: Package public site
+        run: |
+          mkdir -p _site
+          cp index.html style.css app.js logo.svg drive.svg icons.svg psehgaft.svg _site/
+          test -s _site/index.html
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          name: github-pages
+          path: _site
+          retention-days: 3
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
+      pages: write
+      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - uses: actions/checkout@v4
-      - run: node --check app.js
       - uses: actions/configure-pages@v5
-      - run: |
-          mkdir -p _site
-          cp index.html style.css app.js logo.svg drive.svg icons.svg psehgaft.svg _site/
-      - uses: actions/upload-pages-artifact@v3
-        with:
-          path: _site
-      - uses: actions/deploy-pages@v4
+      - name: Wait for uploaded artifact to become discoverable
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          for attempt in $(seq 1 12); do
+            if gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/artifacts?name=github-pages" --jq '[.artifacts[] | select(.name == "github-pages" and .expired == false)] | length' | grep -qx 1; then
+              echo "Pages artifact is available."
+              exit 0
+            fi
+            echo "Artifact not visible yet (attempt $attempt/12)."
+            sleep 10
+          done
+          echo "::error::Expected exactly one active github-pages artifact."
+          exit 1
+      - name: Deploy GitHub Pages
+        uses: actions/deploy-pages@v4
         id: deployment
+        with:
+          artifact_name: github-pages
