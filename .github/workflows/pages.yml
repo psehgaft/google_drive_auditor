@@ -22,7 +22,7 @@ jobs:
       - uses: actions/configure-pages@v5
       - run: |
           mkdir -p _site
-          cp index.html style.css app.js logo.svg drive.svg _site/
+          cp index.html style.css app.js logo.svg drive.svg icons.svg psehgaft.svg _site/
       - uses: actions/upload-pages-artifact@v3
         with:
           path: _site
